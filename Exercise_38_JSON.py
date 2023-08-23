@@ -13,13 +13,16 @@
 
 import json
 
-def load_phonebook():
-    with open("dishes.json", "r", encoding="utf-8") as phonebook_json:
+def load_all_contacts():
+    with open("phonebook.json", "r", encoding="utf-8") as phonebook_json:
         return json.load(phonebook_json)
 
-def save_changes():
+def save_changes(contacts_to_save):
     with open("phonebook.json", "w", encoding="utf-8") as phonebook_json:
         phonebook_json.write(json.dumps(phonebook, ensure_ascii=False))
+    with open("phonebook.json", "r", encoding="utf-8") as phonebook_json:
+        contacts_to_save = json.load(phonebook_json)
+    return contacts_to_save
 
 def add_contact(contacts_to_supplement):
     name = input("Input name:")
@@ -39,12 +42,13 @@ def add_contact(contacts_to_supplement):
         input_phone = input("Input another phone number(if any). Input 'stop' if there are no other phone numbers: ")
         if input_phone != 'stop':
             contacts_to_supplement[name]["phone_numbers"].append(input_phone)
+    save_changes(contacts_to_supplement)
     print("You successfully added a new contact!")
-    save_changes()
+    return contacts_to_supplement
+    
 
-def show_all_contacts(contacts_to_show):
-    print("Here is your full list of contacts:")
-    print(contacts_to_show)
+def show_all_contacts():
+    print(load_all_contacts())
 
 def edit_contact(contacts_to_edit):
     contact_to_edit = input('Input the name of the contact you want to edit: ')
@@ -62,35 +66,46 @@ def edit_contact(contacts_to_edit):
         input_phone = input("Input another new phone number(if any). Input 'stop' if there are no other phone numbers: ")
         if input_phone != 'stop':
             contacts_to_edit[name]["phone_numbers"].append(input_phone)
-    save_changes()
+    save_changes(contacts_to_edit)
     print(f'You successfully edited the contact!')
+    return contacts_to_edit
 
 def remove_contact(contacts_to_remove_in):
     contact_to_remove = input('Input the name of the contact you want to remove: ')
     del contacts_to_remove_in[contact_to_remove]
-    save_changes()
+    save_changes(contacts_to_remove_in)
     print('You successfully removed the contact')
+    return contacts_to_remove_in
 
 def find_contact(contacts_to_find_in):
-    contact_to_find = input("Input name to find a contact: ")
-    if contact_to_find in contacts_to_find_in:
-        print(f"Contact was found! {contact_to_find}, {contacts_to_find_in[contact_to_find]} ")
-    else:
-        print('Contact was not found.')
+    contact_to_find = input("Input name, city, birthday date, or phone number to find a contact: ")
+    contact_found = False
+    for i in iter(contacts_to_find_in):
+        if contact_to_find in i:
+            contact_found = True
+            print(f'Contact found: {i}, {contacts_to_find_in[i]}')
+        else:
+            for j in contacts_to_find_in[i].values():
+                if contact_to_find in j:
+                    contact_found = True
+                    print(f'Contact found: {i}, {contacts_to_find_in[i]}')
+    if contact_found == False:
+        print('There are no contacts satisfying your request.')
 
 
 phonebook = {"Дядя Петя": {"city": "Moscow", "birthday": "01.01.1994", "phone_numbers": ["12345", "12346"]} }
 
-while True: 
+while True:
+    phonebook = load_all_contacts()
     command = input("Input your command:")
     if command == "/start":
         print("Welcome to your contact list!")
     elif command == "/stop":
-        save_changes()
+        save_changes(phonebook)
         print("You closed your contact list. Bye!")
         break
     elif command == "/all":
-        show_all_contacts(phonebook)
+        show_all_contacts()
     elif command == "/add":
         add_contact(phonebook)
     elif command == "/edit":
@@ -99,3 +114,5 @@ while True:
         remove_contact(phonebook)
     elif command == "/find":
         find_contact(phonebook)
+    else:
+        print('Input error. Try again.')
